@@ -26,4 +26,5 @@ jobs:
           publish: true
           sandbox: true
           verbose: true
+          filenames: "metadatav1.9.yml"
           
