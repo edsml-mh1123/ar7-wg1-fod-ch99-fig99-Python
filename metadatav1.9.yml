@@ -20,7 +20,7 @@ contributors:
     type: "ContactPerson"
 image_type: "figure"
 language: "eng"
-version: "0.0.1"
+version: "0.0.42"
 keywords:
   - "surface"
   - "temperature"
