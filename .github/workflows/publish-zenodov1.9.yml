@@ -25,7 +25,7 @@ jobs:
           metadata: figure.yml
           sandbox: true
           publish: true
-          concept: 194376
           verbose: true
+          concept: ''
 
             
