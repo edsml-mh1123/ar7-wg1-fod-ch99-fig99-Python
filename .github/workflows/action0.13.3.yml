@@ -26,5 +26,6 @@ jobs:
           publish: true
           sandbox: true
           verbose: true
+          filenames: code/
           compression: zip
-            
+          
