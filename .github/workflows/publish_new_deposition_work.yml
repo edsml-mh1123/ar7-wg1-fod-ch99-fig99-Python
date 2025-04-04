@@ -37,11 +37,7 @@ jobs:
             exit 1
           fi
 
-          CONCEPT_ID=$(echo "$RESPONSE" | jq -r '.[0].conceptdoi // empty')
-          echo "Extracted Concept ID: ${CONCEPT_ID:-None}"
-
-          # Create a new deposition if no Concept ID exists
-      
+          # Create a new deposition
           # Ensure .zenodo.json exists
           if [ ! -f .zenodo.json ]; then
             echo "Error: .zenodo.json file not found."
@@ -68,12 +64,14 @@ jobs:
           echo "Zenodo API Response: $RESPONSE"
 
           DEPOSITION_ID=$(echo "$RESPONSE" | jq -r '.id // empty')
+          CONCEPT_ID=$(echo "$RESPONSE" | jq -r '.conceptrecid // empty')
           if [ -z "$DEPOSITION_ID" ]; then
             echo "Error: Failed to retrieve Deposition ID."
             exit 1
           fi
 
           echo "Created new deposition with ID: $DEPOSITION_ID"
+          echo "The Matched Concept ID: $CONCEPT_ID"
 
           # Export DEPOSITION_ID for next steps
           echo "DEPOSITION_ID=$DEPOSITION_ID" >> $GITHUB_ENV
