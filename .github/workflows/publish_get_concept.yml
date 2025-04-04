@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Create ZIP of code folder
         run: zip -r code.zip code/
 
@@ -58,47 +58,34 @@ jobs:
 
           NEW_DEPOSITION=$(curl -s -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" "$NEW_DRAFT_URL")
           NEW_DEPOSITION_ID=$(echo "$NEW_DEPOSITION" | jq -r '.id')
-          CHECKCONCEPT_ID=$(echo "$NEW_DEPOSITION" | jq -r '.conceptrecid')
 
           echo "New Deposition ID: $NEW_DEPOSITION_ID"
-          echo "Check Concept ID: $CHECKCONCEPT_ID"
           echo "NEW_DEPOSITION_ID=$NEW_DEPOSITION_ID" >> $GITHUB_ENV
 
-      - name: Upload metadata
+      - name: Upload new code.zip
         env:
           ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
         run: |
-          echo "Uploading metadata..."
-          curl -s -X PUT "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
-            --data-binary @.zenodo.json
-  
-      - name: Upload the ZIP file to new Zenodo deposition
-        env:
-          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
-        run: |
-          echo "Uploading code.zip..."
           curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID/files" \
             -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
             -F "file=@code.zip;filename=code.zip"
-  
-      - name: Keep in Draft Mode
+
+      - name: Update metadata from .zenodo.json
         env:
           ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
         run: |
-          echo "Keeping deposition in draft (skip publish)..."
-          RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID/actions/submit" \
-            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN")
-          echo "Response: $RESPONSE"
+          if [ ! -f .zenodo.json ]; then
+            echo "Error: .zenodo.json not found!"
+            exit 1
+          fi
+          curl -s -X PUT "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
+            -d @.zenodo.json
 
-      # - name: Publish the Zenodo deposition
-      #   if: success()
-      #   env:
-      #     ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
-      #   run: |
-      #     echo "Publishing deposition..."
-      #     RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID/actions/publish" \
-      #       -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN")
-      #     echo "Publish response: $RESPONSE"
-  
+      - name: Publish new version
+        env:
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+        run: |
+          curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID/actions/publish" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN"
