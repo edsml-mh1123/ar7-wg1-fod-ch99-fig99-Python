@@ -9,7 +9,7 @@ ANOMALY OF NERA-SURFACE AIR TEMPERATURE
 Figure number: Figure 3.4
 From the IPCC Working Group I Contribution to the Sixth Assessment Report: Chapter 3
 
-![Figure 3.3](/figureIPCC_AR6_WGI_Figure_3_11.png?raw=true)
+![Figure 3.3](/figure/IPCC_AR6_WGI_Figure_3_11.png?raw=true)
 
 
 ## Contents
