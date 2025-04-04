@@ -1,0 +1,31 @@
+name: Publish to Zenodo (v1.9)
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: ipcc-ar7/publish-zenodo@v1.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ZENODO_SANDBOX_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+        with:
+          # Note that Zenodo only accepts root level files.
+          files: |
+            ./code
+          metadata: metadatav1.9.yml
+          sandbox: true
+          publish: true
+          concept: 194376
+          verbose: true
+
+            
