@@ -1,0 +1,130 @@
+name: Publish to Zenodo
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  publish-to-zenodo:
+    runs-on: ubuntu-latest
+    name: Publish to Zenodo
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Create ZIP of code folder
+        run: zip -r code.zip code/
+
+      - name: Check for existing concept and create deposition
+        id: zenodo_deposition
+        env:
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+        run: |
+          if [ -z "$ZENODO_ACCESS_TOKEN" ]; then
+            echo "Error: ZENODO_ACCESS_TOKEN is not set."
+            exit 1
+          fi
+
+          echo "Fetching depositions from Zenodo sandbox..."
+          RESPONSE=$(curl -s -G "https://sandbox.zenodo.org/api/deposit/depositions" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN")
+
+          LATEST=$(echo "$RESPONSE" | jq -r '[.[] | select(.submitted == true)] | sort_by(.created) | last')
+
+          if [ -n "$LATEST" ] && [ "$LATEST" != "null" ]; then
+            CONCEPT_ID=$(echo "$LATEST" | jq -r '.conceptrecid')
+            EXISTING_DEPOSITION_ID=$(echo "$LATEST" | jq -r '.id')
+
+            echo "Found existing Concept ID: $CONCEPT_ID"
+            echo "Creating new version under deposition ID: $EXISTING_DEPOSITION_ID"
+            NEW_VERSION_RESPONSE=$(curl -s -X POST \
+              "https://sandbox.zenodo.org/api/deposit/depositions/$EXISTING_DEPOSITION_ID/actions/newversion" \
+              -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN")
+
+            NEW_DRAFT_URL=$(echo "$NEW_VERSION_RESPONSE" | jq -r '.links.latest_draft')
+            if [ -z "$NEW_DRAFT_URL" ] || [ "$NEW_DRAFT_URL" == "null" ]; then
+              echo "Error: Could not get latest draft URL for new deposition."
+              exit 1
+            fi
+
+            NEW_DEPOSITION=$(curl -s -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" "$NEW_DRAFT_URL")
+            FINAL_DEPOSITION_ID=$(echo "$NEW_DEPOSITION" | jq -r '.id')
+
+            echo "New Deposition ID: $FINAL_DEPOSITION_ID"
+            echo "FINAL_DEPOSITION_ID=$FINAL_DEPOSITION_ID" >> $GITHUB_ENV
+          else
+            echo "No existing concept found. Creating a new deposition..."
+            CREATE_RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
+              -d '{}')
+
+            FINAL_DEPOSITION_ID=$(echo "$CREATE_RESPONSE" | jq -r '.id // empty')
+            CONCEPT_ID=$(echo "$CREATE_RESPONSE" | jq -r '.conceptrecid // empty')
+
+            if [ -z "$FINAL_DEPOSITION_ID" ]; then
+              echo "Error: Failed to retrieve Deposition ID."
+              exit 1
+            fi
+
+            echo "Created new deposition with ID: $FINAL_DEPOSITION_ID"
+            echo "New Concept ID: $CONCEPT_ID"
+            echo "FINAL_DEPOSITION_ID=$FINAL_DEPOSITION_ID" >> $GITHUB_ENV
+          fi
+
+      - name: Upload metadata
+        env:
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+        run: |
+          if [ ! -f .zenodo.json ]; then
+            echo "Error: .zenodo.json not found!"
+            exit 1
+          fi
+
+          curl -s -X PUT "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
+            --data-binary @.zenodo.json
+
+      - name: Delete old files in the deposition (if any)
+        env:
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+        run: |
+          EXISTING_FILES=$(curl -s -X GET "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" | jq -r '.files[].id // empty')
+
+          if [ ! -z "$EXISTING_FILES" ]; then
+            for FILE_ID in $EXISTING_FILES; do
+              curl -s -X DELETE "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID/files/$FILE_ID" \
+                -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN"
+              echo "Deleted file with ID $FILE_ID"
+            done
+          else
+            echo "No existing files to delete."
+          fi
+
+      - name: Upload the ZIP file to Zenodo
+        env:
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+        run: |
+          curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID/files" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
+            -F "file=@code.zip;filename=code.zip"
+
+      - name: Keep in Draft Mode
+        env:
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+        run: |
+          RESPONSE=$(curl --fail-with-body \
+            -s POST https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID/actions/submit \
+            -H Authorization:"Bearer $ZENODO_ACCESS_TOKEN")
+          echo Response \(Draft Mode\):"$RESPONSE"
+
+      - name: Publish the Zenodo deposition
+        env:
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+        run: |
+          RESPONSE=$(curl --fail-with-body \
+            -s POST https://sandbox.zenodo.org/api/deposit/depositions/$DEPOSITION/actions/publish
