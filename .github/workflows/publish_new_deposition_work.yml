@@ -1,0 +1,98 @@
+name: Publish to Zenodo - New Deposition
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+
+jobs:
+  publish-fig:
+    runs-on: ubuntu-latest
+    name: Publish code to Zenodo
+    steps:
+      - name: Checkout the contents of your repository
+        uses: actions/checkout@v4
+
+      - name: Create ZIP of code folder
+        run: zip -r code.zip code/
+
+      - name: Create Zenodo deposition
+        id: zenodo_deposition
+        env:
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+        run: |
+          # Ensure the access token is set
+          if [ -z "$ZENODO_ACCESS_TOKEN" ]; then
+            echo "Error: ZENODO_ACCESS_TOKEN is not set."
+            exit 1
+          fi
+
+          echo "Token length: ${#ZENODO_ACCESS_TOKEN}"
+
+          # Create a new deposition
+          
+          RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
+            -d @.zenodo.json)
+
+          if [[ $? -ne 0 || -z "$RESPONSE" ]]; then
+            echo "Error creating new deposition."
+            exit 1
+          fi
+
+          echo "Zenodo API Response: $RESPONSE"
+
+          DEPOSITION_ID=$(echo "$RESPONSE" | jq -r '.id // empty')
+          CONCEPT_ID=$(echo "$RESPONSE" | jq -r '.conceptrecid // empty')
+          if [ -z "$DEPOSITION_ID" ]; then
+            echo "Error: Failed to retrieve Deposition ID."
+            exit 1
+          fi
+
+          echo "Created new deposition with ID: $DEPOSITION_ID"
+          echo "Concept ID: $CONCEPT_ID"
+
+    
+          # Export DEPOSITION_ID for next steps
+          echo "DEPOSITION_ID=$DEPOSITION_ID" >> $GITHUB_ENV
+          echo "CONCEPT_ID=$CONCEPT_ID" >> $GITHUB_ENV
+
+      - name: Upload the ZIP file to Zenodo
+        env:
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+        run: |
+          if [ ! -f "code.zip" ]; then
+            echo "Error: code.zip file does not exist!"
+            exit 1
+          fi
+          curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$DEPOSITION_ID/files" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
+            -F "file=@code.zip;filename=code.zip"
+  
+      - name: Keep in Draft Mode
+        env:
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+        run: |
+          RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$DEPOSITION_ID/actions/submit" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN")
+          if [[ $? -ne 0 ]]; then
+            echo "Error keeping deposition in draft mode."
+            exit 1
+          fi
+          echo "Submission completed, kept in draft mode (not published)."
+
+      - name: Publish the Zenodo deposition
+        if: success()
+        env:
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+        run: |
+          RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$DEPOSITION_ID/actions/publish" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN")
+          if [[ $? -ne 0 ]]; then
+            echo "Error publishing the deposition."
+            exit 1
+          fi
+          echo "Deposition published successfully."
