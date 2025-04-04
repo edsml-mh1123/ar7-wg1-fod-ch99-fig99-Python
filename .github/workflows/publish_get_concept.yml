@@ -20,11 +20,9 @@ jobs:
           pip install requests
 
       # 1. Zip the .code folder into code.zip
-      - name: Zip the .code folder
-        run: |
-          echo "Zipping the .code folder..."
-          zip -r code.zip .code/
-
+      - name: Create ZIP of code folder
+        run: zip -r code.zip code/
+        
       # 2. Fetch the latest concept and deposition
       - name: Get latest concept and deposition details
         id: get_concept_deposition
