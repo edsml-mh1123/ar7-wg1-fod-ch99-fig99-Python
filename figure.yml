@@ -1,0 +1,31 @@
+title: "IPCC AR7 WGI Figure 3.3: Annual mean surface temperature (1995–2014)"
+description: "The figure shows the annual-mean surface (2 m) air temperature (°C) for the 
+    period 1995–2014. (a) Multi-model (ensemble) mean constructed with one 
+    realization of the CMIP6 historical experiment from each model. (b) Multi-
+    model mean bias, defined as the difference between the CMIP6 multi-model mean
+    and the climatology of the Fifth generation of ECMWF atmospheric reanalyses 
+    of the global climate (ERA5). (c) Multi-model mean of the root mean square error
+    calculated over all months separately and averaged with respect to the 
+    climatology from ERA5. (d) Multi-model-mean bias as the difference between the 
+    CMIP6 multi-model mean and the climatology from ERA5. Also shown is the multi-
+    model mean bias as the difference between the multi-model mean of (e) high
+    resolution and (f) low resolution simulations of four HighResMIP models and the 
+    climatology from ERA5......"
+creators:
+  - name: "Mai Hong"
+    affiliation: "IPCC AR7 WGI TSU"
+contributors:
+  - name: "David Huard"
+    orcid: "https://orcid.org/0000-0003-0311-5498"
+    type: "ContactPerson"
+image_type: "figure"
+language: "eng"
+version: "0.0.1"
+keywords:
+  - "surface"
+  - "temperature"
+related_identifiers:
+  - relation: "isDerivedFrom"
+    identifier: "10.5281/zenodo.3678927"  # For example, the DOI for the final data
+    scheme: "doi"
+    resource_type: "dataset"

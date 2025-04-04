@@ -21,8 +21,8 @@ jobs:
         with:
           # Note that Zenodo only accepts root level files.
           files: |
-            ./code
-          metadata: metadatav1.9.yml
+            README.md
+          metadata: figure.yml
           sandbox: true
           publish: true
           concept: 194376
