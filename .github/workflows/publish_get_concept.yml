@@ -29,13 +29,16 @@ jobs:
           echo "Response: $RESPONSE"
 
           CONCEPT_ID=$(echo "$RESPONSE" | jq -r '.[0].conceptrecid // empty')
+          OLD_DEPOSITION_ID=$(echo "$RESPONSE" | jq -r '.[0].id // empty')
           if [ -z "$CONCEPT_ID" ]; then
             echo "Error: Could not find concept ID from existing depositions."
             exit 1
           fi
 
           echo "Found Concept ID: $CONCEPT_ID"
+          echo "Found Old Deposition ID: $OLD_DEPOSITION_ID"
           echo "CONCEPT_ID=$CONCEPT_ID" >> $GITHUB_ENV
+
 
       - name: Create new version under the concept
         id: new_version
@@ -43,7 +46,7 @@ jobs:
           ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
         run: |
           echo "Creating new version under concept ID: $CONCEPT_ID"
-          RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$CONCEPT_ID/actions/newversion" \
+          RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$OLD_DEPOSITION_ID/actions/newversion" \
             -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN")
 
           echo "New version creation response: $RESPONSE"
