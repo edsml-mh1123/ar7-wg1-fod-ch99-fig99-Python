@@ -117,14 +117,14 @@ jobs:
         env:
           ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
         run: |
-          RESPONSE=$(curl --fail-with-body \
-            -s POST https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID/actions/submit \
-            -H Authorization:"Bearer $ZENODO_ACCESS_TOKEN")
-          echo Response \(Draft Mode\):"$RESPONSE"
+          echo "Keeping deposition in draft (skip publish)..."
+          RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID/actions/submit" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN")
+          echo "Response: $RESPONSE"
 
       - name: Publish the Zenodo deposition
         env:
           ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
         run: |
           RESPONSE=$(curl --fail-with-body \
-            -s POST https://sandbox.zenodo.org/api/deposit/depositions/$DEPOSITION/actions/publish
+            -s POST https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID/actions/publish
