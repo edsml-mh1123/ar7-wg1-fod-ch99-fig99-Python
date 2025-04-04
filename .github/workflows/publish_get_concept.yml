@@ -1,4 +1,4 @@
-name: Publish Zenodo Version
+name: Publish to Zenodo - Create New Version
 
 on:
   workflow_dispatch:
