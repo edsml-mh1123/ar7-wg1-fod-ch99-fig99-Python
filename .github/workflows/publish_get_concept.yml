@@ -39,37 +39,41 @@ jobs:
           echo "Found Old Deposition ID: $OLD_DEPOSITION_ID"
           echo "CONCEPT_ID=$CONCEPT_ID" >> $GITHUB_ENV
 
-
       - name: Create new version under the concept
         id: new_version
         env:
           ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
         run: |
           echo "Creating new version under concept ID: $CONCEPT_ID"
-          RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$OLD_DEPOSITION_ID/actions/newversion" \
-            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN")
-
-          echo "New version creation response: $RESPONSE"
-
-          # Get new deposition URL from links.latest_draft
-          NEW_DEPOSITION_URL=$(echo "$RESPONSE" | jq -r '.links.latest_draft // empty')
+      
+          # Make the request and capture headers
+          RESPONSE_HEADERS=$(mktemp)
+          curl -s -D "$RESPONSE_HEADERS" -o /dev/null -X POST \
+            "https://sandbox.zenodo.org/api/deposit/depositions/$CONCEPT_ID/actions/newversion" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN"
+      
+          # Extract the Location header (URL of the new draft)
+          NEW_DEPOSITION_URL=$(grep -Fi Location "$RESPONSE_HEADERS" | awk '{print $2}' | tr -d '\r')
+      
           if [ -z "$NEW_DEPOSITION_URL" ]; then
-            echo "Error: Could not get latest draft URL for new deposition."
+            echo "Error: Could not extract new deposition URL from Location header."
             exit 1
           fi
-
-          echo "Fetching new deposition details..."
+      
+          echo "New draft URL: $NEW_DEPOSITION_URL"
+      
+          # Fetch the actual deposition to get its ID
           NEW_DEPOSITION=$(curl -s -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" "$NEW_DEPOSITION_URL")
-          NEW_DEPOSITION_ID=$(echo "$NEW_DEPOSITION" | jq -r '.id')
-
-          if [ -z "$NEW_DEPOSITION_ID" ]; then
-            echo "Error: Could not retrieve new deposition ID."
+          DEPOSITION_ID=$(echo "$NEW_DEPOSITION" | jq -r '.id')
+      
+          if [ -z "$DEPOSITION_ID" ]; then
+            echo "Error: Could not retrieve deposition ID from draft."
             exit 1
           fi
-
-          echo "New deposition ID: $NEW_DEPOSITION_ID"
-          echo "DEPOSITION_ID=$NEW_DEPOSITION_ID" >> $GITHUB_ENV
-
+      
+          echo "New deposition ID: $DEPOSITION_ID"
+          echo "DEPOSITION_ID=$DEPOSITION_ID" >> $GITHUB_ENV
+      
       - name: Upload updated metadata
         env:
           ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
