@@ -10,9 +10,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create ZIP of code folder
-        run: zip -r code.zip code/
-
       - name: Get latest published deposition info
         id: get_latest
         env:
@@ -62,13 +59,14 @@ jobs:
           echo "New Deposition ID: $NEW_DEPOSITION_ID"
           echo "NEW_DEPOSITION_ID=$NEW_DEPOSITION_ID" >> $GITHUB_ENV
 
-      - name: Upload new code.zip
+      - name: Upload updated code.zip to new version
         env:
           ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
         run: |
+          echo "Uploading updated code.zip to new version..."
           curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID/files" \
-            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
-            -F "file=@code.zip;filename=code.zip"
+            -F "file=@.code/code.zip" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN"
 
       - name: Update metadata from .zenodo.json
         env:
@@ -83,9 +81,9 @@ jobs:
             -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
             -d @.zenodo.json
 
-      - name: Publish new version
-        env:
-          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
-        run: |
-          curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID/actions/publish" \
-            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN"
+      # - name: Publish new version
+      #   env:
+      #     ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+      #   run: |
+      #     curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID/actions/publish" \
+      #       -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN"
