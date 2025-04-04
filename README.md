@@ -2,14 +2,13 @@ ANOMALY OF NERA-SURFACE AIR TEMPERATURE
 ====================================
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7437602.svg)](https://doi.org/10.5281/zenodo.7437602)
 ![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)
-
 ![GitHub release](https://img.shields.io/github/v/release/edsml-mh1123/AR6-WGI-Figure?logo=github)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/edsml-mh1123/AR6-WGI-Figure/update)
 
-Figure number: Figure 3.4
+Figure number: Figure 3.11
 From the IPCC Working Group I Contribution to the Sixth Assessment Report: Chapter 3
 
-![Figure 3.3](/figure/IPCC_AR6_WGI_Figure_3_11.png?raw=true)
+![Figure 3.11](/figure/IPCC_AR6_WGI_Figure_3_11.png?raw=true)
 
 
 ## Contents
