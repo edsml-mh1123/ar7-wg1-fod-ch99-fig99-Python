@@ -62,14 +62,25 @@ jobs:
           echo "New Deposition ID: $NEW_DEPOSITION_ID"
           echo "NEW_DEPOSITION_ID=$NEW_DEPOSITION_ID" >> $GITHUB_ENV
 
-      - name: Upload new code.zip
+      - name: In new deposition, delete old files and upload new files
         env:
           ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
         run: |
+          # List existing files in the deposition
+          EXISTING_FILES=$(curl -s -X GET "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" | jq -r '.files[].id')
+      
+          # Delete each existing file
+          for FILE_ID in $EXISTING_FILES; do
+            curl -s -X DELETE "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID/files/$FILE_ID" \
+              -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN"
+          done
+      
+          # Upload the new file
           curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID/files" \
             -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
             -F "file=@code.zip;filename=code.zip"
-
+      
       - name: Update metadata from .zenodo.json
         env:
           ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
