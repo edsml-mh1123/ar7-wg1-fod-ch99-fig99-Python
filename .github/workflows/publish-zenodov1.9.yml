@@ -22,7 +22,7 @@ jobs:
           # Note that Zenodo only accepts root level files.
           files: |
             README.md
-          metadata: .zenodo.json
+          metadata: metadatav1.9.yml
           sandbox: true
           publish: true
           verbose: true
