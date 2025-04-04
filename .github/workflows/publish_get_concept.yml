@@ -103,9 +103,9 @@ jobs:
             -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN")
           echo "Response: $RESPONSE"
 
-      # - name: Publish new version
-      #   env:
-      #     ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
-      #   run: |
-      #     curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID/actions/publish" \
-      #       -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN"
+      - name: Publish new version
+        env:
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
+        run: |
+          curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$NEW_DEPOSITION_ID/actions/publish" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN"
