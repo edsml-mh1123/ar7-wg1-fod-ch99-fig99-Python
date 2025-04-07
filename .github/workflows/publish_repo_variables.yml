@@ -78,53 +78,53 @@ jobs:
             https://api.github.com/repos/$REPO/actions/variables/$VAR_NAME \
             -d '{"name":"'"$VAR_NAME"'", "value":"'"$VAR_VALUE"'"}'
       
-      - name: Upload metadata
-        env:
-          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN_NEW }}
-        run: |
-          if [ ! -f .zenodo.json ]; then
-            echo "Error: .zenodo.json not found!"
-            exit 1
-          fi
+      # - name: Upload metadata
+      #   env:
+      #     ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN_NEW }}
+      #   run: |
+      #     if [ ! -f .zenodo.json ]; then
+      #       echo "Error: .zenodo.json not found!"
+      #       exit 1
+      #     fi
 
-          curl -s -X PUT "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID" \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
-            --data-binary @.zenodo.json
+      #     curl -s -X PUT "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID" \
+      #       -H "Content-Type: application/json" \
+      #       -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
+      #       --data-binary @.zenodo.json
 
-      - name: Delete old files in the deposition (if any)
-        env:
-          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN_NEW }}
-        run: |
-          EXISTING_FILES=$(curl -s -X GET "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID" \
-            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" | jq -r '.files[].id // empty')
+      # - name: Delete old files in the deposition (if any)
+      #   env:
+      #     ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN_NEW }}
+      #   run: |
+      #     EXISTING_FILES=$(curl -s -X GET "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID" \
+      #       -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" | jq -r '.files[].id // empty')
 
-          if [ ! -z "$EXISTING_FILES" ]; then
-            for FILE_ID in $EXISTING_FILES; do
-              curl -s -X DELETE "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID/files/$FILE_ID" \
-                -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN"
-              echo "Deleted file with ID $FILE_ID"
-            done
-          else
-            echo "No existing files to delete."
-          fi
+      #     if [ ! -z "$EXISTING_FILES" ]; then
+      #       for FILE_ID in $EXISTING_FILES; do
+      #         curl -s -X DELETE "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID/files/$FILE_ID" \
+      #           -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN"
+      #         echo "Deleted file with ID $FILE_ID"
+      #       done
+      #     else
+      #       echo "No existing files to delete."
+      #     fi
 
-      - name: Upload the ZIP file to Zenodo
-        env:
-          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN_NEW }}
-        run: |
-          curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID/files" \
-            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
-            -F "file=@code.zip;filename=code.zip"
+      # - name: Upload the ZIP file to Zenodo
+      #   env:
+      #     ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN_NEW }}
+      #   run: |
+      #     curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID/files" \
+      #       -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
+      #       -F "file=@code.zip;filename=code.zip"
 
-      - name: Keep in Draft Mode
-        env:
-          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN_NEW }}
-        run: |
-          echo "Keeping deposition in draft (skip publish)..."
-          RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID/actions/submit" \
-            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN")
-          echo "Response: $RESPONSE"
+      # - name: Keep in Draft Mode
+      #   env:
+      #     ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN_NEW }}
+      #   run: |
+      #     echo "Keeping deposition in draft (skip publish)..."
+      #     RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions/$FINAL_DEPOSITION_ID/actions/submit" \
+      #       -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN")
+      #     echo "Response: $RESPONSE"
 
       # - name: Publish to Zenodo
       #   env:
