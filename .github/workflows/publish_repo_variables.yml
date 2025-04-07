@@ -62,6 +62,37 @@ jobs:
           echo "FINAL_DEPOSITION_ID=$FINAL_DEPOSITION_ID" >> $GITHUB_ENV
           echo "deposition_id=$FINAL_DEPOSITION_ID" >> $GITHUB_OUTPUT
 
+      - name: Check if Token Exists
+        run: |
+          if [ -z "${{ secrets.REPO_VAR_TOKEN }}" ]; then
+            echo "Error: REPO_VAR_TOKEN is not set."
+            exit 1
+          else
+            echo "REPO_VAR_TOKEN is set."
+          fi
+          
+      - name: Debug Repository and Token Info
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Token starts with: ${secrets.REPO_VAR_TOKEN:0:4}..."
+          echo "Token Length: ${#secrets.REPO_VAR_TOKEN}"
+        
+
+      - name: Test Token Permissions
+        env:
+          TOKEN: ${{ secrets.REPO_VAR_TOKEN }}
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/variables)
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "Token has sufficient permissions."
+          else
+            echo "Token may lack required permissions or be invalid."
+            exit 1
+          fi
+
       - name: Save new deposition ID as GitHub repository variable
         if: steps.get-deposition-id.outputs.found == 'false'
         env:
@@ -91,11 +122,8 @@ jobs:
               https://api.github.com/repos/$REPO/actions/variables/$VAR_NAME \
               -d '{"name":"'"$VAR_NAME"'", "value":"'"$VAR_VALUE"'"}'
           fi
-        
-      - name: Debug Repository and Token Info
-        run: |
-          echo "Repository: ${{ github.repository }}"
-          echo "Token Length: ${#secrets.REPO_VAR_TOKEN}"
+
+
       
       # - name: Upload metadata
       #   env:
