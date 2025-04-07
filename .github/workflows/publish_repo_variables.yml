@@ -62,8 +62,9 @@ jobs:
           echo "FINAL_DEPOSITION_ID=$FINAL_DEPOSITION_ID" >> $GITHUB_ENV
           echo "deposition_id=$FINAL_DEPOSITION_ID" >> $GITHUB_OUTPUT
 
-      - name: Check if Token Exists
+      - name: Debug Repository and Token Info
         run: |
+          echo "Repository: ${{ github.repository }}"
           if [ -z "${{ secrets.REPO_VAR_TOKEN }}" ]; then
             echo "Error: REPO_VAR_TOKEN is not set."
             exit 1
@@ -79,18 +80,14 @@ jobs:
             -H "Authorization: Bearer $TOKEN" \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/${{ github.repository }}/actions/variables)
+          
           if [ "$RESPONSE" -eq 200 ]; then
             echo "Token has sufficient permissions."
           else
             echo "Token may lack required permissions or be invalid."
             exit 1
           fi
-      
-      - name: Debug Repository and Token Info
-        run: |
-          echo "Repository: ${{ github.repository }}"
-          echo "Token starts with: ${secrets.REPO_VAR_TOKEN:0:4}..."
-          echo "Token Length: ${#secrets.REPO_VAR_TOKEN}"
+
 
       # - name: Save new deposition ID as GitHub repository variable
       #   if: steps.get-deposition-id.outputs.found == 'false'
@@ -121,7 +118,7 @@ jobs:
       #         https://api.github.com/repos/$REPO/actions/variables/$VAR_NAME \
       #         -d '{"name":"'"$VAR_NAME"'", "value":"'"$VAR_VALUE"'"}'
       #     fi
-        
+
       # - name: Upload metadata
       #   env:
       #     ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN_NEW }}
