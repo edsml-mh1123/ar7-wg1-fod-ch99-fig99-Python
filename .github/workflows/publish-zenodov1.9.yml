@@ -38,13 +38,13 @@ jobs:
           fi
 
       # Step 3: Create a new CONCEPT if no existing ID is found
-      - name: Create new deposition on Zenodo
+      - name: Create new concept id on Zenodo
         if: steps.get-concept-id.outputs.found == 'false'
         id: zenodo-create
         env:
           ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
         run: |
-          echo "Creating new deposition on Zenodo..."
+          echo "Creating new concept id on Zenodo..."
           CREATE_RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
@@ -52,7 +52,7 @@ jobs:
 
           CONCEPT_ID=$(echo "$CREATE_RESPONSE" | jq -r '.conceptrecid // empty')
           if [ -z "$CONCEPT_ID" ]; then
-            echo "Error: Failed to create deposition."
+            echo "Error: Failed to create concept id."
             exit 1
           fi
 
