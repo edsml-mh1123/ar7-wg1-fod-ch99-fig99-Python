@@ -59,7 +59,7 @@ jobs:
 
           echo "Created new concept with ID: $CONCEPT_ID"
           echo "::set-output name=CONCEPT_ID::$CONCEPT_ID"
-          echo "::set-output name=deposition_id::$deposition_id"
+          echo "Created new deposition with ID: $deposition_id"
 
       # Step 4: Save the concept ID as a GitHub repository variable
       - name: Save Zenodo concept ID as GitHub variable
