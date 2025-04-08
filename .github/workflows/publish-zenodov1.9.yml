@@ -15,34 +15,34 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Fetch Zenodo Deposition ID from GitHub repository variables
-      - name: Fetch Zenodo Deposition ID
-        id: get-deposition-id
+      # Step 2: Fetch Zenodo concept ID from GitHub repository variables
+      - name: Fetch Zenodo Concept ID
+        id: get-concept-id
         env:
           TOKEN: ${{ secrets.REPO_VAR_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          echo "Fetching existing Zenodo deposition ID..."
+          echo "Fetching existing Zenodo concept ID..."
           VAR_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
                              -H "Accept: application/vnd.github+json" \
-                             https://api.github.com/repos/$REPO/actions/variables/ZENODO_DEPOSITION_ID)
+                             https://api.github.com/repos/$REPO/actions/variables/ZENODO_CONCEPT_ID_NEW)
 
           VALUE=$(echo "$VAR_RESPONSE" | jq -r '.value // empty')
           if [ -n "$VALUE" ]; then
-            echo "Found existing ZENODO_DEPOSITION_ID=$VALUE"
-            echo "::set-output name=final_deposition_id::$VALUE"
+            echo "Found existing ZENODO_CONCEPT_ID_NEW=$VALUE"
+            echo "::set-output name=CONCEPT_ID::$VALUE"
             echo "found=true" >> $GITHUB_OUTPUT
           else
-            echo "No existing ZENODO_DEPOSITION_ID found."
+            echo "No existing ZENODO_CONCEPT_ID_NEW found."
             echo "found=false" >> $GITHUB_OUTPUT
           fi
 
-      # Step 3: Create a new deposition if no existing ID is found
+      # Step 3: Create a new CONCEPT if no existing ID is found
       - name: Create new deposition on Zenodo
-        if: steps.get-deposition-id.outputs.found == 'false'
+        if: steps.get-concept-id.outputs.found == 'false'
         id: zenodo-create
         env:
-          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN_NEW }}
+          ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN }}
         run: |
           echo "Creating new deposition on Zenodo..."
           CREATE_RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions" \
@@ -50,25 +50,25 @@ jobs:
             -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
             -d '{}')
 
-          FINAL_DEPOSITION_ID=$(echo "$CREATE_RESPONSE" | jq -r '.id // empty')
-          if [ -z "$FINAL_DEPOSITION_ID" ]; then
+          CONCEPT_ID=$(echo "$CREATE_RESPONSE" | jq -r '.conceptrecid // empty')
+          if [ -z "$CONCEPT_ID" ]; then
             echo "Error: Failed to create deposition."
             exit 1
           fi
 
-          echo "Created new deposition with ID: $FINAL_DEPOSITION_ID"
-          echo "::set-output name=final_deposition_id::$FINAL_DEPOSITION_ID"
+          echo "Created new concept with ID: $CONCEPT_ID"
+          echo "::set-output name=CONCEPT_ID::$CONCEPT_ID"
 
-      # Step 4: Save the deposition ID as a GitHub repository variable
-      - name: Save Zenodo Deposition ID as GitHub variable
-        if: steps.get-deposition-id.outputs.found == 'false'
+      # Step 4: Save the concept ID as a GitHub repository variable
+      - name: Save Zenodo concept ID as GitHub variable
+        if: steps.get-concept-id.outputs.found == 'false'
         env:
           TOKEN: ${{ secrets.REPO_VAR_TOKEN }}
           REPO: ${{ github.repository }}
-          VAR_NAME: ZENODO_DEPOSITION_ID
-          VAR_VALUE: ${{ steps.zenodo-create.outputs.final_deposition_id }}
+          VAR_NAME: ZENODO_CONCEPT_ID_NEW
+          VAR_VALUE: ${{ steps.zenodo-create.outputs.CONCEPT_ID }}
         run: |
-          echo "Saving Zenodo deposition ID to GitHub repository variables..."
+          echo "Saving Zenodo concept ID to GitHub repository variables..."
           VAR_CHECK=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer $TOKEN" \
             https://api.github.com/repos/$REPO/actions/variables/$VAR_NAME)
@@ -89,7 +89,7 @@ jobs:
             echo "Updated variable $VAR_NAME with value $VAR_VALUE"
           fi
 
-      # Step 5: Publish to Zenodo using the FINAL_DEPOSITION_ID dynamically
+      # Step 5: Publish to Zenodo using the CONCEPT_ID dynamically
       - name: Publish to Zenodo
         uses: ipcc-ar7/publish-zenodo@v1.9
         env:
@@ -102,4 +102,4 @@ jobs:
           sandbox: true
           publish: true
           verbose: true
-          concept: '${{ steps.get-deposition-id.outputs.final_deposition_id || steps.zenodo-create.outputs.final_deposition_id }}'
+          concept: '${{ steps.get-concept-id.outputs.CONCEPT_ID || steps.zenodo-create.outputs.CONCEPT_ID }}'
