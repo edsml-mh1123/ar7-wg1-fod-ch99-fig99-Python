@@ -11,90 +11,85 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      # Step 1: Checkout the repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Retrieve Existing Zenodo Deposition ID
+      # Step 2: Fetch Zenodo Deposition ID from GitHub repository variables
+      - name: Fetch Zenodo Deposition ID
         id: get-deposition-id
         env:
-          GH_TOKEN: ${{ secrets.REPO_VAR_TOKEN }}
+          TOKEN: ${{ secrets.REPO_VAR_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
-          echo "Retrieving ZENODO_DEPOSITION_ID from repository variables..."
-          response=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
-                           -H "Accept: application/vnd.github+json" \
-                           https://api.github.com/repos/${{ github.repository }}/actions/variables/ZENODO_DEPOSITION_ID)
+          echo "Fetching existing Zenodo deposition ID..."
+          VAR_RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
+                             -H "Accept: application/vnd.github+json" \
+                             https://api.github.com/repos/$REPO/actions/variables/ZENODO_DEPOSITION_ID)
 
-          id=$(echo "$response" | jq -r '.value // empty')
-
-          if [[ -n "$id" ]]; then
-            echo "final_deposition_id=$id" >> $GITHUB_OUTPUT
+          VALUE=$(echo "$VAR_RESPONSE" | jq -r '.value // empty')
+          if [ -n "$VALUE" ]; then
+            echo "Found existing ZENODO_DEPOSITION_ID=$VALUE"
+            echo "::set-output name=final_deposition_id::$VALUE"
             echo "found=true" >> $GITHUB_OUTPUT
           else
+            echo "No existing ZENODO_DEPOSITION_ID found."
             echo "found=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create Zenodo Deposition (if not found)
+      # Step 3: Create a new deposition if no existing ID is found
+      - name: Create new deposition on Zenodo
         if: steps.get-deposition-id.outputs.found == 'false'
-        id: create-deposition
+        id: zenodo-create
         env:
           ZENODO_ACCESS_TOKEN: ${{ secrets.ZENODO_SANDBOX_ACCESS_TOKEN_NEW }}
         run: |
-          echo "Creating a new Zenodo deposition..."
-          response=$(curl -s -X POST https://sandbox.zenodo.org/api/deposit/depositions \
-                      -H "Content-Type: application/json" \
-                      -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
-                      -d '{}')
+          echo "Creating new deposition on Zenodo..."
+          CREATE_RESPONSE=$(curl -s -X POST "https://sandbox.zenodo.org/api/deposit/depositions" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $ZENODO_ACCESS_TOKEN" \
+            -d '{}')
 
-          new_id=$(echo "$response" | jq -r '.id // empty')
-
-          if [[ -z "$new_id" ]]; then
-            echo "Error: Failed to create deposition. Response: $response"
+          FINAL_DEPOSITION_ID=$(echo "$CREATE_RESPONSE" | jq -r '.id // empty')
+          if [ -z "$FINAL_DEPOSITION_ID" ]; then
+            echo "Error: Failed to create deposition."
             exit 1
           fi
 
-          echo "New Zenodo deposition created: ID=$new_id"
-          echo "final_deposition_id=$new_id" >> $GITHUB_OUTPUT
+          echo "Created new deposition with ID: $FINAL_DEPOSITION_ID"
+          echo "::set-output name=final_deposition_id::$FINAL_DEPOSITION_ID"
 
-      - name: Save Zenodo Deposition ID as Repository Variable
+      # Step 4: Save the deposition ID as a GitHub repository variable
+      - name: Save Zenodo Deposition ID as GitHub variable
         if: steps.get-deposition-id.outputs.found == 'false'
         env:
-          GH_TOKEN: ${{ secrets.REPO_VAR_TOKEN }}
+          TOKEN: ${{ secrets.REPO_VAR_TOKEN }}
+          REPO: ${{ github.repository }}
           VAR_NAME: ZENODO_DEPOSITION_ID
-          VAR_VALUE: ${{ steps.create-deposition.outputs.final_deposition_id }}
+          VAR_VALUE: ${{ steps.zenodo-create.outputs.final_deposition_id }}
         run: |
-          echo "Persisting Zenodo deposition ID as a repository variable..."
-          repo=${{ github.repository }}
+          echo "Saving Zenodo deposition ID to GitHub repository variables..."
+          VAR_CHECK=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $TOKEN" \
+            https://api.github.com/repos/$REPO/actions/variables/$VAR_NAME)
 
-          exists=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            https://api.github.com/repos/$repo/actions/variables/$VAR_NAME)
-
-          if [[ "$exists" == "404" ]]; then
-            echo "Variable does not exist. Creating..."
+          if [ "$VAR_CHECK" = "404" ]; then
+            echo "Variable does not exist. Creating it..."
             curl -s -X POST \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "Accept: application/vnd.github+json" \
-              https://api.github.com/repos/$repo/actions/variables \
-              -d "{\"name\":\"$VAR_NAME\", \"value\":\"$VAR_VALUE\"}"
+              -H "Authorization: Bearer $TOKEN" \
+              https://api.github.com/repos/$REPO/actions/variables \
+              -d '{"name":"'"$VAR_NAME"'", "value":"'"$VAR_VALUE"'"}'
+            echo "Created variable $VAR_NAME with value $VAR_VALUE"
           else
-            echo "Variable exists. Updating..."
+            echo "Variable exists. Updating it..."
             curl -s -X PUT \
-              -H "Authorization: Bearer $GH_TOKEN" \
-              -H "Accept: application/vnd.github+json" \
-              https://api.github.com/repos/$repo/actions/variables/$VAR_NAME \
-              -d "{\"name\":\"$VAR_NAME\", \"value\":\"$VAR_VALUE\"}"
+              -H "Authorization: Bearer $TOKEN" \
+              https://api.github.com/repos/$REPO/actions/variables/$VAR_NAME \
+              -d '{"name":"'"$VAR_NAME"'", "value":"'"$VAR_VALUE"'"}'
+            echo "Updated variable $VAR_NAME with value $VAR_VALUE"
           fi
 
-      - name: Resolve Final Deposition ID
-        id: resolve-id
-        run: |
-          echo "Resolving final deposition ID..."
-          if [[ "${{ steps.get-deposition-id.outputs.found }}" == "true" ]]; then
-            echo "final_deposition_id=${{ steps.get-deposition-id.outputs.final_deposition_id }}" >> $GITHUB_OUTPUT
-          else
-            echo "final_deposition_id=${{ steps.create-deposition.outputs.final_deposition_id }}" >> $GITHUB_OUTPUT
-          fi
-
+      # Step 5: Publish to Zenodo using the FINAL_DEPOSITION_ID dynamically
       - name: Publish to Zenodo
         uses: ipcc-ar7/publish-zenodo@v1.9
         env:
@@ -107,4 +102,4 @@ jobs:
           sandbox: true
           publish: true
           verbose: true
-          concept: ${{ steps.resolve-id.outputs.final_deposition_id }}
+          concept: '${{ steps.get-deposition-id.outputs.final_deposition_id || steps.zenodo-create.outputs.final_deposition_id }}'
