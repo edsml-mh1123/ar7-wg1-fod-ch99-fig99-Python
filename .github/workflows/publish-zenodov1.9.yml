@@ -51,6 +51,7 @@ jobs:
             -d '{}')
 
           CONCEPT_ID=$(echo "$CREATE_RESPONSE" | jq -r '.conceptrecid // empty')
+          deposition_id=$(echo "$CREATE_RESPONSE" | jq -r '.id // empty')
           if [ -z "$CONCEPT_ID" ]; then
             echo "Error: Failed to create concept id."
             exit 1
@@ -58,6 +59,7 @@ jobs:
 
           echo "Created new concept with ID: $CONCEPT_ID"
           echo "::set-output name=CONCEPT_ID::$CONCEPT_ID"
+          echo "::set-output name=deposition_id::$deposition_id"
 
       # Step 4: Save the concept ID as a GitHub repository variable
       - name: Save Zenodo concept ID as GitHub variable
