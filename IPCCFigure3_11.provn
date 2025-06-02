@@ -1,0 +1,67 @@
+document
+  prefix brick <https://brickschema.org/schema/Brick#>
+  prefix csvw <http://www.w3.org/ns/csvw#>
+  prefix dc <http://purl.org/dc/elements/1.1/>
+  prefix dcat <http://www.w3.org/ns/dcat#>
+  prefix dcmitype <http://purl.org/dc/dcmitype/>
+  prefix dcterms <http://purl.org/dc/terms/>
+  prefix dcam <http://purl.org/dc/dcam/>
+  prefix doap <http://usefulinc.com/ns/doap#>
+  prefix foaf <http://xmlns.com/foaf/0.1/>
+  prefix geo <http://www.opengis.net/ont/geosparql#>
+  prefix odrl <http://www.w3.org/ns/odrl/2/>
+  prefix org <http://www.w3.org/ns/org#>
+  prefix prof <http://www.w3.org/ns/dx/prof/>
+  prefix qb <http://purl.org/linked-data/cube#>
+  prefix schema <https://schema.org/>
+  prefix sh <http://www.w3.org/ns/shacl#>
+  prefix skos <http://www.w3.org/2004/02/skos/core#>
+  prefix sosa <http://www.w3.org/ns/sosa/>
+  prefix ssn <http://www.w3.org/ns/ssn/>
+  prefix time <http://www.w3.org/2006/time#>
+  prefix vann <http://purl.org/vocab/vann/>
+  prefix void <http://rdfs.org/ns/void#>
+  prefix wgs <https://www.w3.org/2003/01/geo/wgs84_pos#>
+  prefix owl <http://www.w3.org/2002/07/owl#>
+  prefix rdf <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+  prefix rdfs <http://www.w3.org/2000/01/rdf-schema#>
+  prefix xml <http://www.w3.org/XML/1998/namespace>
+  prefix provone <http://purl.dataone.org/provone/2015/01/15/ontology#>
+  prefix tmpl <http://openprovenance.org/tmpl#>
+  prefix var <http://openprovenance.org/var#>
+  prefix vargen <http://openprovenance.org/vargen#>
+  prefix vcard <http://www.w3.org/2006/vcard/ns#>
+  prefix ipcc <https://www.ipcc.ch/data/#>
+  
+  bundle var:IPCCFigureProv
+    prefix ipcc <https://www.ipcc.ch/data/#>
+    prefix provone <http://purl.dataone.org/provone/2015/01/15/ontology#>
+    prefix var <http://openprovenance.org/var#>
+    
+    actedOnBehalfOf(var:SoftwareService, var:user, -)
+    used(var:runVisProgram, var:figureDataCollectionId, -)
+    wasDerivedFrom(var:figureId, var:FinalData_Reconstruction, -, -, -)
+    hadMember(var:figureCollectionId, var:figureId)
+    hadMember(var:figureDataCollectionId, var:FinalData_Model)
+    wasInfluencedBy(var:SoftwareService, var:systemId)
+    hadMember(var:figureDataCollectionId, var:FinalData_Reconstruction)
+    wasDerivedFrom(var:figureId, var:FinalData_Model, -, -, -)
+    wasInfluencedBy(var:SoftwareService, var:libs)
+    wasGeneratedBy(var:figureCollectionId, var:runVisProgram, -)
+    hadMember(var:libs, var:lib)
+    agent(var:SoftwareService, [prov:type='prov:SoftwareAgent', prov:type='ipcc:Jupyter', prov:location="https://github.com/edsml-mh1123/ar7-wg1-fod-ch99-fig99-Python", dcterms:description="Jupyter environment used for figure generation", prov:label="JupyterLab"])
+    agent(var:user, [prov:type='prov:Person', vcard:uid="https://orcid.org/0000-0000-0000-0000"])
+    entity(var:systemId, [prov:type='prov:Plan', prov:label="JupyterLabContainer WG1", prov:location="https://jupyter.org", dcterms:identifier="doi:10.5281/zenodo.placeholder-container"])
+    entity(var:libs, [prov:type='prov:Collection'])
+    entity(var:lib, [dcterms:description="Python libraries used for visualization and data analysis", prov:label="Matplotlib, Pandas, NumPy"])
+    entity(var:FinalData_Model, [prov:type='provone:Data', prov:type='ipcc:FigureData', prov:location="data/map_midHolocene_models.csv", prov:value="data/map_midHolocene_models.csv", prov:label="Mid-Holocene Model Data", dcterms:identifier="doi:10.5281/zenodo.placeholder-models"])
+    entity(var:FinalData_Reconstruction, [prov:type='provone:Data', prov:type='ipcc:FigureData', dcterms:identifier="doi:10.5281/zenodo.placeholder-reconstructions", prov:label="Mid-Holocene Reconstruction Data", prov:value="data/map_midHolocene_reconstructions.csv", prov:location="data/map_midHolocene_reconstructions.csv"])
+    entity(var:figureDataCollectionId, [prov:type='prov:Collection', dcterms:identifier="doi:10.5281/zenodo.placeholder-datacollection"])
+    entity(var:programId, [prov:type='ipcc:Notebook', prov:type='prov:Plan', prov:location="https://github.com/edsml-mh1123/ar7-wg1-fod-ch99-fig99-Python/blob/main/code/ch03_fig11_code.py", dcterms:identifier="doi:10.5281/zenodo.placeholder-code", prov:label="ch03_fig11_code.py"])
+    entity(var:figureId, [prov:type='provone:Visualization', prov:type='ipcc:Figure', dcterms:identifier="doi:10.5281/zenodo.placeholder-figure311", prov:value="figure/IPCC_AR6_WGI_Figure_3_11.png", prov:location="figure/IPCC_AR6_WGI_Figure_3_11.png", tmpl:linked="https://github.com/edsml-mh1123/ar7-wg1-fod-ch99-fig99-Python/blob/main/figure/IPCC_AR6_WGI_Figure_3_11.png", dcterms:description="Mid-Holocene climate comparison, generated using Python script and model/reconstruction data", prov:label="WG1 Figure 3.11"])
+    entity(var:figureCollectionId, [prov:type='prov:Collection', dcterms:identifier="doi:10.5281/zenodo.placeholder-figurecollection"])
+    activity(var:runVisProgram, -, -, [prov:type='ipcc:playNotebook', prov:type='provone:Execution', prov:generated='var:figureId', tmpl:endTime="2025-06-01T12:10:00Z", tmpl:startTime="2025-06-01T12:00:00Z"])
+    wasAssociatedWith(var:runVisProgram, var:user, var:programId)
+    wasAssociatedWith(var:runVisProgram, var:SoftwareService, var:programId)
+  endBundle
+endDocument

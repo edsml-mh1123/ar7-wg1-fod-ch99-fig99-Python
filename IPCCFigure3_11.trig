@@ -1,0 +1,99 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix provone: <http://purl.dataone.org/provone/2015/01/15/ontology#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix tmpl: <http://openprovenance.org/tmpl#> .
+@prefix var: <http://openprovenance.org/var#> .
+@prefix vargen: <http://openprovenance.org/vargen#> .
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
+@prefix ipcc: <https://www.ipcc.ch/data/#> .
+
+var:IPCCFigureProv {
+
+    var:SoftwareService a prov:Agent, 
+        prov:SoftwareAgent, ipcc:Jupyter ;
+        rdfs:label "JupyterLab" ;
+        prov:actedOnBehalfOf var:user ;
+        prov:wasInfluencedBy var:libs ;
+        prov:wasInfluencedBy var:systemId ;
+        dcterms:description "Jupyter environment used for figure generation" ;
+        prov:atLocation "https://github.com/edsml-mh1123/ar7-wg1-fod-ch99-fig99-Python" .
+
+    var:systemId a prov:Entity,
+        prov:Plan ;
+        rdfs:label "JupyterLabContainer WG1" ;
+        dcterms:identifier "doi:10.5281/zenodo.placeholder-container" ;
+        prov:atLocation "https://jupyter.org" .
+
+    var:libs a prov:Collection,
+        prov:Entity ;
+        prov:hadMember var:lib .
+
+    var:lib a prov:Entity ;
+        rdfs:label "Matplotlib, Pandas, NumPy" ;
+        dcterms:description "Python libraries used for visualization and data analysis" .
+
+    var:user a prov:Agent,
+        prov:Person ;
+        vcard:uid "https://orcid.org/0000-0000-0000-0000" .
+
+    var:FinalData_Model a provone:Data,
+        prov:Entity, ipcc:FigureData ;
+        rdfs:label "Mid-Holocene Model Data" ;
+        prov:atLocation "data/map_midHolocene_models.csv" ;
+        prov:value "data/map_midHolocene_models.csv" ;
+        dcterms:identifier "doi:10.5281/zenodo.placeholder-models" .
+
+    var:FinalData_Reconstruction a provone:Data,
+        prov:Entity, ipcc:FigureData ;
+        rdfs:label "Mid-Holocene Reconstruction Data" ;
+        prov:atLocation "data/map_midHolocene_reconstructions.csv" ;
+        prov:value "data/map_midHolocene_reconstructions.csv" ;
+        dcterms:identifier "doi:10.5281/zenodo.placeholder-reconstructions" .
+
+    var:figureDataCollectionId a prov:Collection,
+        prov:Entity ;
+        dcterms:identifier "doi:10.5281/zenodo.placeholder-datacollection" ;
+        prov:hadMember var:FinalData_Model , var:FinalData_Reconstruction .
+
+    var:programId a prov:Entity,
+        prov:Plan ;
+        prov:type ipcc:Notebook ;
+        rdfs:label "ch03_fig11_code.py" ;
+        dcterms:identifier "doi:10.5281/zenodo.placeholder-code" ;
+        prov:atLocation "https://github.com/edsml-mh1123/ar7-wg1-fod-ch99-fig99-Python/blob/main/code/ch03_fig11_code.py" .
+
+    var:runVisProgram a provone:Execution,
+        prov:Activity ;
+        prov:type ipcc:playNotebook ;
+        tmpl:startTime "2025-06-01T12:00:00Z" ;
+        tmpl:endTime "2025-06-01T12:10:00Z" ;
+        prov:qualifiedAssociation _:N4, _:N8 ;
+        prov:used var:figureDataCollectionId ;
+        prov:generated var:figureId .
+
+    _:N4 a prov:Association ;
+        prov:agent var:user ;
+        prov:hadPlan var:programId .
+
+    _:N8 a prov:Association ;
+        prov:agent var:SoftwareService ;
+        prov:hadPlan var:programId .
+
+    var:figureId a provone:Visualization,
+        prov:Entity, ipcc:Figure ;
+        rdfs:label "WG1 Figure 3.11" ;
+        tmpl:linked "https://github.com/edsml-mh1123/ar7-wg1-fod-ch99-fig99-Python/blob/main/figure/IPCC_AR6_WGI_Figure_3_11.png" ;
+        dcterms:identifier "doi:10.5281/zenodo.placeholder-figure311" ;
+        dcterms:description "Mid-Holocene climate comparison, generated using Python script and model/reconstruction data" ;
+        prov:value "figure/IPCC_AR6_WGI_Figure_3_11.png" ;
+        prov:atLocation "figure/IPCC_AR6_WGI_Figure_3_11.png" ;
+        prov:wasDerivedFrom var:FinalData_Model ;
+        prov:wasDerivedFrom var:FinalData_Reconstruction .
+
+    var:figureCollectionId a prov:Collection,
+        prov:Entity ;
+        dcterms:identifier "doi:10.5281/zenodo.placeholder-figurecollection" ;
+        prov:hadMember var:figureId ;
+        prov:wasGeneratedBy var:runVisProgram .
+}
