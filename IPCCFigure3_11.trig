@@ -4,96 +4,99 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix tmpl: <http://openprovenance.org/tmpl#> .
 @prefix var: <http://openprovenance.org/var#> .
-@prefix vargen: <http://openprovenance.org/vargen#> .
+@prefix uid: <http://openprovenance.org/uid#> .
 @prefix vcard: <http://www.w3.org/2006/vcard/ns#> .
 @prefix ipcc: <https://www.ipcc.ch/data/#> .
+@prefix schema: <https://schema.org/> .
+@prefix repo: <https://github.com/edsml-mh1123/ar7-wg1-fod-ch99-fig99-Python/> .
 
 var:IPCCFigureProv {
 
-    var:SoftwareService a prov:Agent, 
-        prov:SoftwareAgent, ipcc:Jupyter ;
+    # Agent: User
+    uid:user-0001 a prov:Agent, prov:Person ;
+        rdfs:label "Martina Stockhause" ;
+        vcard:uid "https://orcid.org/0000-0002-6378-6229" .
+
+    # Agent: Software Service
+    uid:service-0001 a prov:Agent, prov:SoftwareAgent, ipcc:Jupyter ;
         rdfs:label "JupyterLab" ;
-        prov:actedOnBehalfOf var:user ;
-        prov:wasInfluencedBy var:libs ;
-        prov:wasInfluencedBy var:systemId ;
+        prov:actedOnBehalfOf uid:user-0001 ;
+        prov:wasInfluencedBy uid:libs-0001 ;
+        prov:wasInfluencedBy uid:system-0001 ;
         dcterms:description "Jupyter environment used for figure generation" ;
-        prov:atLocation "https://github.com/edsml-mh1123/ar7-wg1-fod-ch99-fig99-Python" .
+        prov:atLocation "local" .
 
-    var:systemId a prov:Entity,
-        prov:Plan ;
+    # Entity: System
+    uid:system-0001 a prov:Entity, prov:Plan ;
         rdfs:label "JupyterLabContainer WG1" ;
-        dcterms:identifier "doi:10.5281/zenodo.placeholder-container" ;
-        prov:atLocation "https://jupyter.org" .
+        dcterms:identifier <https://doi.org/10.5281/zenodo.7437602> ;
+        prov:atLocation "https://hub.docker.com/r/ipccwg1/jupyterlab-wg1:latest" .
 
-    var:libs a prov:Collection,
-        prov:Entity ;
-        prov:hadMember var:lib .
+    # Entity: Python Libraries
+    uid:libs-0001 a prov:Collection, prov:Entity ;
+        prov:hadMember uid:lib-0001 .
 
-    var:lib a prov:Entity ;
+    uid:lib-0001 a prov:Entity ;
         rdfs:label "Matplotlib, Pandas, NumPy" ;
         dcterms:description "Python libraries used for visualization and data analysis" .
 
-    var:user a prov:Agent,
-        prov:Person ;
-        vcard:uid "https://orcid.org/0000-0000-0000-0000" .
-
-    var:FinalData_Model a provone:Data,
-        prov:Entity, ipcc:FigureData ;
+    # Data Entities
+    uid:data-model-0001 a provone:Data, prov:Entity, ipcc:FigureData ;
         rdfs:label "Mid-Holocene Model Data" ;
         prov:atLocation "data/map_midHolocene_models.csv" ;
         prov:value "data/map_midHolocene_models.csv" ;
-        dcterms:identifier "doi:10.5281/zenodo.placeholder-models" .
+        dcterms:identifier <https://doi.org/10.5281/zenodo.14986335> .
 
-    var:FinalData_Reconstruction a provone:Data,
-        prov:Entity, ipcc:FigureData ;
+    uid:data-recon-0001 a provone:Data, prov:Entity, ipcc:FigureData ;
         rdfs:label "Mid-Holocene Reconstruction Data" ;
         prov:atLocation "data/map_midHolocene_reconstructions.csv" ;
         prov:value "data/map_midHolocene_reconstructions.csv" ;
-        dcterms:identifier "doi:10.5281/zenodo.placeholder-reconstructions" .
+        dcterms:identifier <https://doi.org/10.5281/zenodo.14986335> .
 
-    var:figureDataCollectionId a prov:Collection,
-        prov:Entity ;
-        dcterms:identifier "doi:10.5281/zenodo.placeholder-datacollection" ;
-        prov:hadMember var:FinalData_Model , var:FinalData_Reconstruction .
+    uid:data-coll-0001 a prov:Collection, prov:Entity ;
+        dcterms:identifier <https://doi.org/10.5281/zenodo.14986335> ;
+        prov:hadMember uid:data-model-0001, uid:data-recon-0001 .
 
-    var:programId a prov:Entity,
-        prov:Plan ;
+    # Script / Code
+    uid:program-0001 a prov:Entity, prov:Plan ;
         prov:type ipcc:Notebook ;
         rdfs:label "ch03_fig11_code.py" ;
-        dcterms:identifier "doi:10.5281/zenodo.placeholder-code" ;
-        prov:atLocation "https://github.com/edsml-mh1123/ar7-wg1-fod-ch99-fig99-Python/blob/main/code/ch03_fig11_code.py" .
+        dcterms:identifier <https://doi.org/10.5281/zenodo.7437602> ;
+        prov:atLocation "https://github.com/edsml-mh1123/ar7-wg1-fod-ch99-fig99-Python/blob/main/ch03_fig11_code.py" ;
+        schema:codeRepository <https://github.com/edsml-mh1123/ar7-wg1-fod-ch99-fig99-Python/> .
 
-    var:runVisProgram a provone:Execution,
-        prov:Activity ;
+    # Associations
+    uid:assoc-user-program a prov:Association ;
+        prov:agent uid:user-0001 ;
+        prov:hadPlan uid:program-0001 .
+
+    uid:assoc-service-program a prov:Association ;
+        prov:agent uid:service-0001 ;
+        prov:hadPlan uid:program-0001 .
+
+    # Execution Activity
+    uid:activity-0001 a provone:Execution, prov:Activity ;
         prov:type ipcc:playNotebook ;
         tmpl:startTime "2025-06-01T12:00:00Z" ;
         tmpl:endTime "2025-06-01T12:10:00Z" ;
-        prov:qualifiedAssociation _:N4, _:N8 ;
-        prov:used var:figureDataCollectionId ;
-        prov:generated var:figureId .
+        prov:qualifiedAssociation uid:assoc-user-program, uid:assoc-service-program ;
+        prov:used uid:data-coll-0001 ;
+        prov:generated uid:figure-0001 .
 
-    _:N4 a prov:Association ;
-        prov:agent var:user ;
-        prov:hadPlan var:programId .
-
-    _:N8 a prov:Association ;
-        prov:agent var:SoftwareService ;
-        prov:hadPlan var:programId .
-
-    var:figureId a provone:Visualization,
-        prov:Entity, ipcc:Figure ;
+    # Output Figure
+    uid:figure-0001 a provone:Visualization, prov:Entity, ipcc:Figure ;
         rdfs:label "WG1 Figure 3.11" ;
-        tmpl:linked "https://github.com/edsml-mh1123/ar7-wg1-fod-ch99-fig99-Python/blob/main/figure/IPCC_AR6_WGI_Figure_3_11.png" ;
-        dcterms:identifier "doi:10.5281/zenodo.placeholder-figure311" ;
+        tmpl:linked <https://www.ipcc.ch/report/ar6/wg1/figures/chapter-3/figure-3-11> ;
+        dcterms:identifier <https://doi.org/10.5281/zenodo.14986335> ;
         dcterms:description "Mid-Holocene climate comparison, generated using Python script and model/reconstruction data" ;
         prov:value "figure/IPCC_AR6_WGI_Figure_3_11.png" ;
         prov:atLocation "figure/IPCC_AR6_WGI_Figure_3_11.png" ;
-        prov:wasDerivedFrom var:FinalData_Model ;
-        prov:wasDerivedFrom var:FinalData_Reconstruction .
+        prov:wasDerivedFrom uid:data-model-0001 ;
+        prov:wasDerivedFrom uid:data-recon-0001 .
 
-    var:figureCollectionId a prov:Collection,
-        prov:Entity ;
-        dcterms:identifier "doi:10.5281/zenodo.placeholder-figurecollection" ;
-        prov:hadMember var:figureId ;
-        prov:wasGeneratedBy var:runVisProgram .
+    # Figure Collection
+    uid:figure-coll-0001 a prov:Collection, prov:Entity ;
+        dcterms:identifier <https://doi.org/10.5281/zenodo.14986335> ;
+        prov:hadMember uid:figure-0001 ;
+        prov:wasGeneratedBy uid:activity-0001 .
 }
