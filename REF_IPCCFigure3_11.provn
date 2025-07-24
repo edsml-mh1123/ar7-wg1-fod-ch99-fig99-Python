@@ -1,0 +1,48 @@
+document
+  prefix var <http://openprovenance.org/var#>
+  prefix attribute <https://www.esmvaltool.org/attribute>
+  prefix preprocessor <https://www.esmvaltool.org/preprocessor>
+
+  activity(var:preprocessingTask, -, -)
+  activity(var:diagnosticTask, -, -)
+  activity(var:software, -, -)
+  agent(var:diagnosticAuthor, [
+    attribute:email='',
+    attribute:orcid='https://orcid.org/0000-0002-6378-6229',
+    attribute:github='martina-stockhause',
+    attribute:institute='DKRZ'
+  ])
+  agent(var:recipeAuthor, [
+    attribute:email='someone@example.org',
+    attribute:orcid='https://orcid.org/0000-0002-1234-5678',
+    attribute:github='',
+    attribute:institute=''
+  ])
+  agent(var:project)
+  entity(var:recipe, [
+    attribute:description='IPCC AR7 Figure recipe',
+    attribute:references='doi:10.5281/zenodo.1234567'
+  ])
+  wasAttributedTo(var:recipe, var:recipeAuthor)
+  wasAttributedTo(var:recipe, var:project)
+  wasStartedBy(var:preprocessingTask, var:recipe, var:software, -)
+  wasStartedBy(var:diagnosticTask, var:recipe, var:software, -)
+  entity(var:inputFile1, [
+    attribute:model_id='Mid-Holocene Model Data',
+    attribute:path='data/map_midHolocene_models.csv'
+  ])
+  wasGeneratedBy(var:inputFile1, var:preprocessingTask)
+  entity(var:inputFile2, [
+    attribute:model_id='Mid-Holocene Reconstruction Data',
+    attribute:path='data/map_midHolocene_reconstructions.csv'
+  ])
+  wasGeneratedBy(var:inputFile2, var:preprocessingTask)
+  entity(var:resultFile, [
+    attribute:caption='WG1 Figure 3.11',
+    attribute:path='figure/IPCC_AR6_WGI_Figure_3_11.png',
+    attribute:citation='https://doi.org/10.5281/zenodo.14986335'
+  ])
+  wasGeneratedBy(var:resultFile, var:diagnosticTask)
+  wasDerivedFrom(var:resultFile, var:inputFile1)
+  wasDerivedFrom(var:resultFile, var:inputFile2)
+endDocument
